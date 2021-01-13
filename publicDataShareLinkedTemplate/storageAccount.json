@@ -8,6 +8,13 @@
              "description": "The storage account name can contain only lowercase letters and numbers. Name must be between 1 and 11 characters"
              }
         },
+      "containerName": {
+            "type": "string",
+            "defaultValue": "public",
+            "metadata": {
+              "description": "Specifies the name of the blob container."
+            }
+    },
     "location": {
              "type": "string",
              "metadata": {
@@ -22,15 +29,18 @@
             "name": "[parameters('storageAccountName')]",
             "location": "[parameters('location')]",
             "sku": {
-                 "name": "Standard_LRS"
+                 "name": "Standard_LRS",
+                 "tier": "Standard"
                 },
             "kind": "StorageV2",
-            "properties": {},
+            "properties": {
+                "accessTier": "Hot"
+            },
             "resources": [
             {
               "type": "blobServices/containers",
               "apiVersion": "2019-06-01",
-              "name": "public",
+              "name": "[concat('default/', parameters('containerName'))]",
               "dependsOn": [
                 "[parameters('storageAccountName')]"
               ]
