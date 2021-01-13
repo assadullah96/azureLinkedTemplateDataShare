@@ -50,6 +50,14 @@
         "description": "Specify the subscription ID of the storage account. Because this template creates the storage account in the same resource group as the data sharing account, use the current subscription ID."
       }
     },
+    "storageAccountName": {
+             "type": "string",
+             "defaultValue": "storage",
+             "metadata": {
+             "description": "The storage account name can contain only lowercase letters and numbers. Name must be between 1 and 11 characters"
+             }
+      },
+    
     "storageAccountResourceGroupName": {
       "type": "string",
       "defaultValue": "[resourceGroup().name]",
