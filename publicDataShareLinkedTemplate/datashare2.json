@@ -96,7 +96,10 @@
           "name": "[concat('default/', variables('containerName'))]",
           "dependsOn": [
             "[variables('storageAccountName')]"
-          ]
+          ],
+          "properties": {
+                "publicAccess": "Container"
+            }
         }
       ]
     },
