@@ -1,0 +1,256 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+       "factoryName": {
+            "type": "string",
+            "defaultValue": "dfactory",
+            "metadata": {
+             "description": "The name of data factory can contain only letters, numbers and hyphens. The first and last characters must be a letter or number. Spaces are not allowed."
+            }
+        },
+
+        "storageAccountName": {
+             "type": "string",
+             "defaultValue": "storage",
+             "metadata": {
+             "description": "The storage account name can contain only lowercase letters and numbers. Name must be between 1 and 11 characters"
+             }
+        },
+       "location": {
+             "type": "string",
+             "defaultValue": "eastus",
+             "metadata": {
+             "description": "Location of your resources. Default location is eastUS"
+            }
+         },
+       
+        "connection_name": {
+            "defaultValue": "teams-7",
+            "type": "String",
+            "metadata": {
+             "description": "The name must begin with a letter or number, end with a letter, number or underscore, and may contain only letters, numbers, underscores, periods, or hyphens."
+            }
+        },
+       
+        "actionGroupsName": {
+            "defaultValue": "Assad",
+            "type": "String",
+            "metadata": {
+             "description": "The name can contain letters, numbers, and special characters, this can start or end with any number, letter or other special characters."
+            }
+        },
+        "appLogicName": {
+            "defaultValue": "asadAlerts",
+            "type": "String",
+            "metadata": {
+             "description": "The name can only contain letters, numbers, and '-', '(', ')', '_' or '.'"
+            }
+        },
+        "emailForAlerts": {
+            "defaultValue": "assadullah@emumba.com",
+            "type": "String",
+            "metadata": {
+             "description": "Provide valid email address for alerts."
+            }
+        },
+
+         "SinkDataToSql": {
+            "defaultValue": "Yes",
+            "allowedValues": [ "Yes", "No" ],
+            "type": "string",
+            "metadata": {
+                "description": "Do you want to create sql database and server and write data to sqldb?"
+            }
+        },
+    
+        "databaseName": {
+             "type": "string",
+             "defaultValue": "sampledb",
+             "metadata": {
+             "description": "Database name should not match special patterns,The value has a length of at most 115. Database name should not contain reserved words.No database with the same name exists in the server"
+            }
+        },
+        "sqlServerName": {
+           "type": "string",
+            "defaultValue": "serverdb",
+            "metadata": {
+            "description": "Server name must be at least 1 characters and at most 50 characters. Server name must only contain lowercase letters, numbers, and hyphens. The server name must not start or end in a hyphen."
+            } 
+        },
+
+       "administratorLogin": {
+             "type": "string",
+             "defaultValue":"",
+             "metadata": {
+             "description": "Your login name must not contain a SQL Identifier or a typical system name (like admin, administrator, sa, root, dbmanager, loginmanager, etc.) or a built-in database user or role (like dbo, guest, public, etc.). "
+             }
+        },
+       "administratorLoginPassword": {
+            "type": "securestring",
+             "defaultValue":"",
+             "metadata": {
+             "description": "Your password must be at least 8 characters in length. It must be no more than 128 characters in length.Your password must contain characters from three of the following categories – English uppercase letters, English lowercase letters, numbers (0-9), and non-alphanumeric characters (!, $, #, %, etc.). Your password cannot contain all or part of the login name. Part of a login name is defined as three or more consecutive alphanumeric characters."
+              }
+        },
+      "currentTime": {
+            "type": "string",
+            "defaultValue": "[utcNow('u')]",
+            "metadata": {
+              "description": "This parameter will get the current utc time"
+              }
+        }
+  },
+  "variables": {
+        "dataFactorynameUnique": "[concat(parameters('factoryName'), uniqueString(resourceGroup().id))]",
+        "storageActNameUnique": "[concat(parameters('storageAccountName'), uniqueString(resourceGroup().id))]",
+        "dbserverUniqueName": "[concat(parameters('sqlServerName'), uniqueString(resourceGroup().id))]",
+        "dbnameUnique": "[concat(parameters('databaseName'), uniqueString(resourceGroup().id))]",
+        "logicAppnameUnique": "[concat( parameters('appLogicName'), uniqueString(resourceGroup().id))]"
+    },
+
+  "resources": [
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "StorageAccountTemplate",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "https://raw.githubusercontent.com/assadullah96/AzureARMTemplates/main/AzureLinkedTemplate-main/storageAccount.json",
+                    "contentVersion": "1.0.0.0"
+                },
+                 "parameters": {
+                    "storageAccountName": {
+                    "value": "[variables('storageActNameUnique')]"
+                 },
+                     "location":{
+                    "value": "[parameters('location')]"
+                }   
+            }
+            }
+    },
+
+
+    {
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2019-10-01",
+        "name": "appLogicandActionRule",
+        "dependsOn": [
+                "StorageAccountTemplate"
+        ],
+        "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+            "uri": "https://raw.githubusercontent.com/assadullah96/AzureARMTemplates/main/AzureLinkedTemplate-main/appLogicActionRule.json",
+            "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+            "appLogicName":{
+                "value": "[variables('logicAppnameUnique')]"
+                },
+                "connection_name":{
+                "value": "[parameters('connection_name')]"
+                }       
+        }
+        }
+    },
+  
+  {
+    "type": "Microsoft.Resources/deployments",
+    "apiVersion": "2019-10-01",
+    "name": "DataFactoryResources",
+    "dependsOn": [ 
+          "StorageAccountTemplate",
+          "appLogicandActionRule"
+    ],
+    "properties": {
+      "mode": "Incremental",
+      "templateLink": {
+        "uri": "https://raw.githubusercontent.com/assadullah96/AzureARMTemplates/main/AzureLinkedTemplate-main/dataFactory.json",
+        "contentVersion": "1.0.0.0"
+      },
+      "parameters": {
+          "factoryName":{
+            "value": "[variables('dataFactorynameUnique')]"
+            },
+            "storageAccountName":{
+            "value": "[variables('storageActNameUnique')]"
+            },
+            "connection_name":{
+            "value": "[parameters('connection_name')]"
+            },
+            "actionGroupsName":{
+            "value": "[parameters('actionGroupsName')]"
+            },
+            "appLogicName":{
+            "value": "[variables('logicAppnameUnique')]"
+            },
+            "emailForAlerts":{
+            "value": "[parameters('emailForAlerts')]"
+            },
+
+           "location":{
+            "value": "[parameters('location')]"
+            },
+            "SinkDataToSql": {
+            "value": "[parameters('SinkDataToSql')]"
+            },
+            "databaseName":{
+            "value": "[variables('dbnameUnique')]"
+            },
+            "sqlServerName":{
+            "value": "[variables('dbserverUniqueName')]"
+            },
+            "administratorLogin":{
+            "value": "[parameters('administratorLogin')]"
+            },
+            "administratorLoginPassword":{
+            "value": "[parameters('administratorLoginPassword')]"
+            },
+            "currentTime":{
+            "value": "[parameters('currentTime')]"
+            }
+        
+      }
+    }
+  },
+  
+    {
+    "type": "Microsoft.Resources/deployments",
+    "apiVersion": "2019-10-01",
+    "name": "SqlServerAndDb",
+    "dependsOn": [
+          "StorageAccountTemplate"
+    ],
+    "properties": {
+      "mode": "Incremental",
+      "templateLink": {
+        "uri": "https://raw.githubusercontent.com/assadullah96/AzureARMTemplates/main/AzureLinkedTemplate-main/SqlServerandDb.json",
+        "contentVersion": "1.0.0.0"
+      },
+      "parameters": {
+           "location":{
+            "value": "[parameters('location')]"
+            },
+            "SinkDataToSql": {
+            "value": "[parameters('SinkDataToSql')]"
+            },
+            "databaseName":{
+            "value": "[variables('dbnameUnique')]"
+            },
+            "sqlServerName":{
+            "value": "[variables('dbserverUniqueName')]"
+            },
+            "administratorLogin":{
+            "value": "[parameters('administratorLogin')]"
+            },
+            "administratorLoginPassword":{
+            "value": "[parameters('administratorLoginPassword')]"
+            }      
+      }
+    }
+  }
+
+  ]
+}
