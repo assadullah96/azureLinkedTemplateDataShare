@@ -67,7 +67,7 @@
     }
   },
   "variables": {
-    "storageAccountName": "parameters('storageAccountName')",
+    "storageAccountName": "[parameters('storageAccountName')]",
     "containerName": "public",
     "dataShareAccountName": "[concat(parameters('projectName'), 'shareaccounta')]",
     "dataShareName": "[concat(parameters('projectName'),'share')]",
