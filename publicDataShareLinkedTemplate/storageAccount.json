@@ -25,7 +25,17 @@
                  "name": "Standard_LRS"
                 },
             "kind": "StorageV2",
-            "properties": {}
-       },
+            "properties": {},
+            "resources": [
+            {
+              "type": "blobServices/containers",
+              "apiVersion": "2019-06-01",
+              "name": "public",
+              "dependsOn": [
+                "[parameters('storageAccountName')]"
+              ]
+            }
+          ]
+       }
   ]
 }
