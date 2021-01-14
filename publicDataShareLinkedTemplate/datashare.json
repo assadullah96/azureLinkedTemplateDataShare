@@ -2,7 +2,7 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "projectName": {
+    "DatashareProjectName": {
       "type": "string",
       "metadata": {
         "description": "Specify a project name that is used to generate resource names."
@@ -38,24 +38,17 @@
         "description": "Specify snapshot schedule recurrence."
       }
     },
-    "syncTime": {
-      "type": "string",
-      "defaultValue": "[utcNow('yyyy-MM-ddTHH:mm:ssZ')]",
-      "metadata": {
-        "description": "Specify snapshot schedule start time."
-      }
-    },
     "currentTime": {
         "type": "string",
         "defaultValue": "[utcNow('u')]",
         "metadata": {
            "description": "This parameter will get the current utc time"
            }
-        },
+        }
   },
   "variables": {
-    "dataShareAccountName": "[concat(parameters('projectName'), 'shareaccounta')]",
-    "dataShareName": "[concat(parameters('projectName'),'share')]"
+    "dataShareAccountName": "[concat(parameters('DatashareProjectName'), 'shareaccounta')]",
+    "dataShareName": "[concat(parameters('DatashareProjectName'),'share')]"
   },
   "resources": [
     {
