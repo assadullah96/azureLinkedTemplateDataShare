@@ -95,6 +95,21 @@
             "metadata": {
               "description": "This parameter will get the current utc time"
               }
+        },
+      "ShareDataResource": {
+            "defaultValue": "Yes",
+            "allowedValues": [ "Yes", "No" ],
+            "type": "string",
+            "metadata": {
+                "description": "Do you want to create Share data resource to share data from one environment to other ?"
+            }
+        },
+
+      "DatashareProjectName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify a project name that is used to generate resource names."
+            }
         }
   },
   "variables": {
@@ -113,7 +128,7 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "https://raw.githubusercontent.com/assadullah96/AzureLinkedTemplate/main/customerLinkedTemplate/storageAccount.json",
+                    "uri": "https://raw.githubusercontent.com/assadullah96/azureLinkedTemplateDataShare/main/customerDataShareLinkedTemplate/storageAccount.json",
                     "contentVersion": "1.0.0.0"
                 },
                  "parameters": {
@@ -138,7 +153,7 @@
         "properties": {
         "mode": "Incremental",
         "templateLink": {
-            "uri": "https://raw.githubusercontent.com/assadullah96/AzureLinkedTemplate/main/customerLinkedTemplate/appLogicAndActionRule",
+            "uri": "https://raw.githubusercontent.com/assadullah96/azureLinkedTemplateDataShare/main/customerDataShareLinkedTemplate/appLogicActionRule.json",
             "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -163,7 +178,7 @@
     "properties": {
       "mode": "Incremental",
       "templateLink": {
-        "uri": "https://raw.githubusercontent.com/assadullah96/AzureLinkedTemplate/main/customerLinkedTemplate/dataFactory.json",
+        "uri": "https://raw.githubusercontent.com/assadullah96/azureLinkedTemplateDataShare/main/customerDataShareLinkedTemplate/dataFactory.json",
         "contentVersion": "1.0.0.0"
       },
       "parameters": {
@@ -206,8 +221,40 @@
             },
             "currentTime":{
             "value": "[parameters('currentTime')]"
+            },
+            "ShareDataResource":{
+            "value": "[parameters('ShareDataResource')]"
             }
         
+      }
+    }
+  },
+
+  {
+    "type": "Microsoft.Resources/deployments",
+    "apiVersion": "2019-10-01",
+    "name": "DataShare",
+    "dependsOn": [ 
+          "StorageAccountTemplate"
+    ],
+    "properties": {
+      "mode": "Incremental",
+      "templateLink": {
+        "uri": "https://raw.githubusercontent.com/assadullah96/azureLinkedTemplateDataShare/main/customerDataShareLinkedTemplate/dataShareReceiving.json",
+        "contentVersion": "1.0.0.0"
+      },
+      "parameters": {
+            "DatashareProjectName":{
+            "value": "[parameters('DatashareProjectName')]"
+            },
+
+           "location":{
+            "value": "[parameters('location')]"
+           },
+            
+            "ShareDataResource":{
+            "value": "[parameters('ShareDataResource')]"
+            }
       }
     }
   },
@@ -222,7 +269,7 @@
     "properties": {
       "mode": "Incremental",
       "templateLink": {
-        "uri": "https://raw.githubusercontent.com/assadullah96/AzureLinkedTemplate/main/customerLinkedTemplate/sqlserverAndDb.json",
+        "uri": "https://raw.githubusercontent.com/assadullah96/azureLinkedTemplateDataShare/main/customerDataShareLinkedTemplate/sqlserverAndDb.json",
         "contentVersion": "1.0.0.0"
       },
       "parameters": {
