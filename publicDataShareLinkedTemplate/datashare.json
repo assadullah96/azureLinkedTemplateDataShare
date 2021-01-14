@@ -68,7 +68,6 @@
   },
   "variables": {
     "storageAccountName": "[parameters('storageAccountName')]",
-    "containerName": "public",
     "dataShareAccountName": "[concat(parameters('projectName'), 'shareaccounta')]",
     "dataShareName": "[concat(parameters('projectName'),'share')]",
     "roleAssignmentName": "[guid(uniqueString(variables('storageAccountName'), variables('storageBlobDataReaderRoleDefinitionId'), variables('dataShareAccountName')))]",
@@ -97,54 +96,14 @@
         "shareKind": "CopyBased"
       }
     },
-    {
-      "scope": "[format('Microsoft.Storage/storageAccounts/{0}', variables('storageAccountName'))]",
-      "type": "Microsoft.Authorization/roleAssignments",
-      "apiVersion": "2020-04-01-preview",
-      "name": "[variables('roleAssignmentName')]",
-      "properties": {
-        "roleDefinitionId": "[variables('storageBlobDataReaderRoleDefinitionId')]",
-        "principalId": "[reference(resourceId('Microsoft.DataShare/accounts', variables('dataShareAccountName')), '2019-11-01', 'Full').identity.principalId]"
-      }
-    },
-    {
-      "type": "Microsoft.DataShare/accounts/shares/dataSets",
-      "apiVersion": "2019-11-01",
-      "name": "[concat(variables('dataShareAccountName'), '/', variables('dataShareName'),'/', variables('containerName'))]",
-      "dependsOn": [
-        "[resourceId('Microsoft.DataShare/accounts/shares', variables('dataShareAccountName'), variables('dataShareName'))]",
-        "[resourceId('Microsoft.DataShare/accounts', variables('dataShareAccountName'))]",
-        "[extensionResourceId(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), 'Microsoft.Authorization/roleAssignments', variables('roleAssignmentName'))]"
-      ],
-      "kind": "Container",
-      "properties": {
-        "subscriptionId": "[parameters('storageAccountSubscriptionID')]",
-        "resourceGroup": "[parameters('storageAccountResourceGroupName')]",
-        "storageAccountName": "[variables('storageAccountName')]",
-        "containerName": "[variables('containerName')]"
-      }
-    },
-    {
-      "type": "Microsoft.DataShare/accounts/shares/invitations",
-      "apiVersion": "2019-11-01",
-      "name": "[concat(variables('dataShareAccountName'), '/', variables('dataShareName'), '/', variables('inviteName'))]",
-      "dependsOn": [
-        "[resourceId('Microsoft.DataShare/accounts/shares', variables('dataShareAccountName'), variables('dataShareName'))]",
-        "[resourceId('Microsoft.DataShare/accounts', variables('dataShareAccountName'))]",
-        "[extensionResourceId(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), 'Microsoft.Authorization/roleAssignments', variables('roleAssignmentName'))]"
-      ],
-      "properties": {
-        "targetEmail": "[parameters('invitationEmail')]"
-      }
-    },
+
     {
       "type": "Microsoft.DataShare/accounts/shares/synchronizationSettings",
       "apiVersion": "2019-11-01",
       "name": "[concat(variables('dataShareAccountName'), '/', variables('dataShareName'), '/', variables('dataShareName'), '_synchronizationSetting')]",
       "dependsOn": [
         "[resourceId('Microsoft.DataShare/accounts/shares', variables('dataShareAccountName'), variables('dataShareName'))]",
-        "[resourceId('Microsoft.DataShare/accounts', variables('dataShareAccountName'))]",
-        "[extensionResourceId(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), 'Microsoft.Authorization/roleAssignments', variables('roleAssignmentName'))]"
+        "[resourceId('Microsoft.DataShare/accounts', variables('dataShareAccountName'))]"
       ],
       "kind": "[parameters('syncKind')]",
       "properties": {
