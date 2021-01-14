@@ -80,6 +80,14 @@
 		"currentTime": {
 			"type": "string",
 			"defaultValue": "[utcNow('u')]"
+		},
+		 "ShareDataResource": {
+		    "defaultValue": "Yes",
+		    "allowedValues": [ "Yes", "No" ],
+		    "type": "string",
+		    "metadata": {
+			"description": "Do you want to create Share data resource to share data from one environment to other ?"
+		    }
 		}
 	},
 	"variables": {
@@ -98,7 +106,7 @@
 			}
 		},
 		{
-            "condition": "[equals(parameters('ShareDataResource'),'No')]",
+           	"condition": "[equals(parameters('ShareDataResource'),'No')]",
 			"name": "[concat(parameters('factoryName'), '/SqlDataLoader')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -1775,6 +1783,7 @@
 			]
 		},
 		{
+            "condition": "[equals(parameters('ShareDataResource'),'No')]",
 			"name": "[concat(parameters('factoryName'), '/PublicBlobDataset')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -1915,6 +1924,7 @@
 			]
 		},
 		{
+            "condition": "[equals(parameters('ShareDataResource'),'No')]",
 			"name": "[concat(parameters('factoryName'), '/CustomerBlobDataset')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -2380,7 +2390,8 @@
 								"name": "Name",
 								"operator": "Include",
 								"values": [
-									"SqlDataLoader"
+									"SqlDataLoader",
+                                    "SqlDataLoader_datashare"
 								]
 							},
 							{
@@ -2463,7 +2474,8 @@
 								"name": "PipelineName",
 								"operator": "Include",
 								"values": [
-									"SqlDataLoader"
+									"SqlDataLoader",
+                                    "SqlDataLoader_datashare"
 								]
 							},
 							{
@@ -2584,7 +2596,8 @@
 								"name": "PipelineName",
 								"operator": "Include",
 								"values": [
-									"SqlDataLoader"
+									"SqlDataLoader",
+                                    "SqlDataLoader_datashare"
 								]
 							},
 							{
@@ -2687,7 +2700,8 @@
 								"name": "Name",
 								"operator": "Include",
 								"values": [
-									"SqlDataLoader"
+									"SqlDataLoader",
+                                    "SqlDataLoader_datashare"
 								]
 							},
 							{
@@ -2770,7 +2784,8 @@
 								"name": "PipelineName",
 								"operator": "Include",
 								"values": [
-									"SqlDataLoader"
+									"SqlDataLoader",
+                                    "SqlDataLoader_datashare"
 								]
 							},
 							{
@@ -2837,7 +2852,8 @@
 								"name": "PipelineName",
 								"operator": "Include",
 								"values": [
-									"SqlDataLoader"
+									"SqlDataLoader",
+                                    "SqlDataLoader_datashare"
 								]
 							},
 							{
@@ -2902,7 +2918,8 @@
 								"name": "PipelineName",
 								"operator": "Include",
 								"values": [
-									"SqlDataLoader"
+									"SqlDataLoader",
+                                    "SqlDataLoader_datashare"
 								]
 							},
 							{
@@ -2967,7 +2984,8 @@
 								"name": "PipelineName",
 								"operator": "Include",
 								"values": [
-									"SqlDataLoader"
+									"SqlDataLoader",
+                                    "SqlDataLoader_datashare"
 								]
 							},
 							{
@@ -3018,7 +3036,8 @@
 								"name": "Name",
 								"operator": "Include",
 								"values": [
-									"SqlDataLoader"
+									"SqlDataLoader",
+                                    "SqlDataLoader_datashare"
 								]
 							},
 							{
@@ -3138,20 +3157,7 @@
                 "logicAppReceivers": [],
                 "azureFunctionReceivers": []
             },
-            "dependsOn": [
-                "[concat(variables('factoryId'), '/datasets/PublicBlobDataset')]",
-                "[concat(variables('factoryId'), '/datasets/CustomerBlobDataset')]",
-                "[concat(variables('factoryId'), '/dataflows/LoadIntoStaggingTable_SQL')]",
-                "[concat(variables('factoryId'), '/datasets/AzureSqlOperationsTable')]",
-                "[concat(variables('factoryId'), '/dataflows/LoadIntoOperationalTable_SQL')]",
-                "[concat(variables('factoryId'), '/datasets/source_csv_dataset')]",
-                "[concat(variables('factoryId'), '/datasets/previous_data')]",
-                "[concat(variables('factoryId'), '/datasets/get_previous_data_copy')]",
-                "[concat(variables('factoryId'), '/datasets/AzureSqlStagging')]",
-                "[concat(variables('factoryId'), '/datasets/prev_stagging_table')]",
-                "[concat(variables('factoryId'), '/datasets/get_prev_stagging_table_copy')]",
-                "[concat(variables('factoryId'), '/datasets/save_store_proc_stagging_result')]"
-            ]
+            "dependsOn": []
         }	      
   ]
 }
