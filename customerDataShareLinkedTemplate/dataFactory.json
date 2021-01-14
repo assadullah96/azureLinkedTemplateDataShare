@@ -81,14 +81,14 @@
 			"type": "string",
 			"defaultValue": "[utcNow('u')]"
 		},
-         "ShareDataResource": {
-            "defaultValue": "Yes",
-            "allowedValues": [ "Yes", "No" ],
-            "type": "string",
-            "metadata": {
-                "description": "Do you want to create Share data resource to share data from one environment to other ?"
-            }
-        }
+		 "ShareDataResource": {
+		    "defaultValue": "Yes",
+		    "allowedValues": [ "Yes", "No" ],
+		    "type": "string",
+		    "metadata": {
+			"description": "Do you want to create Share data resource to share data from one environment to other ?"
+		    }
+		}
 	},
 	"variables": {
 		"factoryId": "[resourceId('Microsoft.DataFactory/factories/', parameters('factoryName'))]",
