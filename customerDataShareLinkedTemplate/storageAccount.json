@@ -13,8 +13,12 @@
              "metadata": {
              "description": "Location of your resources. Default location is eastUS"
             }
-         }, 
+         }
   },
+   "variables": {
+       "containerName":"customer"
+   },
+
   "resources": [
       {
             "type": "Microsoft.Storage/storageAccounts",
@@ -25,7 +29,17 @@
                  "name": "Standard_LRS"
                 },
             "kind": "StorageV2",
-            "properties": {}
-       },
+            "properties": {},
+            "resources": [
+                {
+                "type": "blobServices/containers",
+                "apiVersion": "2019-06-01",
+                "name": "[concat('default/', variables('containerName'))]",
+                "dependsOn": [
+                    "[parameters('storageAccountName')]"
+                ]
+                }
+            ]
+       }
   ]
 }
