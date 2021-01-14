@@ -44,7 +44,14 @@
       "metadata": {
         "description": "Specify snapshot schedule start time."
       }
-    }
+    },
+    "currentTime": {
+        "type": "string",
+        "defaultValue": "[utcNow('u')]",
+        "metadata": {
+           "description": "This parameter will get the current utc time"
+           }
+        },
   },
   "variables": {
     "dataShareAccountName": "[concat(parameters('projectName'), 'shareaccounta')]",
@@ -87,7 +94,7 @@
       "kind": "[parameters('syncKind')]",
       "properties": {
         "recurrenceInterval": "[parameters('syncInterval')]",
-        "synchronizationTime": "[parameters('syncTime')]"
+        "synchronizationTime": "[parameters('currentTime')]"
       }
     }
   ]
