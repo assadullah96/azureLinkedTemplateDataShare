@@ -80,7 +80,15 @@
 		"currentTime": {
 			"type": "string",
 			"defaultValue": "[utcNow('u')]"
-		}
+		},
+         "ShareDataResource": {
+            "defaultValue": "Yes",
+            "allowedValues": [ "Yes", "No" ],
+            "type": "string",
+            "metadata": {
+                "description": "Do you want to create Share data resource to share data from one environment to other ?"
+            }
+        }
 	},
 	"variables": {
 		"factoryId": "[resourceId('Microsoft.DataFactory/factories/', parameters('factoryName'))]",
@@ -98,7 +106,7 @@
 			}
 		},
 		{
-            "condition": "[equals(parameters('ShareDataResource'),'No')]",
+           		"condition": "[equals(parameters('ShareDataResource'),'No')]",
 			"name": "[concat(parameters('factoryName'), '/SqlDataLoader')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
