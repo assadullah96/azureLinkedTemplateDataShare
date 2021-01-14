@@ -15,13 +15,6 @@
         "description": "Specify the location for the resources."
       }
     },
-    "invitationEmail": {
-      "type": "string",
-      "defaultValue":"assadullah@azulcustomerenvgmail.onmicrosoft.com",
-      "metadata": {
-        "description": "Specify an email address for receiving data share invitations."
-      }
-    },
     "syncKind": {
       "type": "string",
       "defaultValue": "ScheduleBased",
@@ -43,36 +36,11 @@
       "metadata": {
         "description": "Specify snapshot schedule start time."
       }
-    },
-    "storageAccountSubscriptionID": {
-      "type": "string",
-      "defaultValue": "[subscription().subscriptionId]",
-      "metadata": {
-        "description": "Specify the subscription ID of the storage account. Because this template creates the storage account in the same resource group as the data sharing account, use the current subscription ID."
-      }
-    },
-    "storageAccountName": {
-             "type": "string",
-             "defaultValue": "storage",
-             "metadata": {
-             "description": "The storage account name can contain only lowercase letters and numbers. Name must be between 1 and 11 characters"
-             }
-    },
-    "storageAccountResourceGroupName": {
-      "type": "string",
-      "defaultValue": "[resourceGroup().name]",
-      "metadata": {
-        "description": "Specify the resource group of the storage account. Because this template creates the storage account in the same resource group as the data sharing account, use the resource group."
-      }
     }
   },
   "variables": {
-    "storageAccountName": "[parameters('storageAccountName')]",
     "dataShareAccountName": "[concat(parameters('projectName'), 'shareaccounta')]",
-    "dataShareName": "[concat(parameters('projectName'),'share')]",
-    "roleAssignmentName": "[guid(uniqueString(variables('storageAccountName'), variables('storageBlobDataReaderRoleDefinitionId'), variables('dataShareAccountName')))]",
-    "inviteName": "[concat(variables('dataShareName'), 'invite')]",
-    "storageBlobDataReaderRoleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')]"
+    "dataShareName": "[concat(parameters('projectName'),'share')]"
   },
   "resources": [
     {
