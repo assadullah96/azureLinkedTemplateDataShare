@@ -98,6 +98,7 @@
 			}
 		},
 		{
+            "condition": "[equals(parameters('ShareDataResource'),'No')]",
 			"name": "[concat(parameters('factoryName'), '/SqlDataLoader')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -921,6 +922,813 @@
 				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabaseLinkedService')]"
 			]
 		},
+
+        {
+            "condition": "[equals(parameters('ShareDataResource'),'Yes')]",
+            "name": "[concat(parameters('factoryName'), '/SqlDataLoader_datashare')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "covid_tracking_StaggingTable",
+                        "type": "ExecuteDataFlow",
+                        "dependsOn": [
+                            {
+                                "activity": "Create Schema if not exists",
+                                "dependencyConditions": [
+                                    "Completed"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "dataflow": {
+                                "referenceName": "LoadIntoStaggingTable_SQL",
+                                "type": "DataFlowReference",
+                                "parameters": {},
+                                "datasetParameters": {
+                                    "sourceCSV": {
+                                        "container": "customer",
+                                        "directory": "curated/covid-19/covid_tracking/latest",
+                                        "file": "covid_tracking.csv"
+                                    },
+                                    "sinkSqlStaggingTable": {
+                                        "tablename": "staggingTable",
+                                        "schemaName": "asad"
+                                    }
+                                }
+                            },
+                            "staging": {},
+                            "compute": {
+                                "coreCount": 8,
+                                "computeType": "General"
+                            },
+                            "traceLevel": "Fine"
+                        }
+                    },
+                    {
+                        "name": "Create Schema if not exists",
+                        "type": "Lookup",
+                        "dependsOn": [
+                            {
+                                "activity": "IfCurrentSchemaHasSameColumnbutDifferentArrangement",
+                                "dependencyConditions": [
+                                    "Completed"
+                                ]
+                            },
+                            {
+                                "activity": "IfCurrentSchemaHasLessColumns",
+                                "dependencyConditions": [
+                                    "Completed"
+                                ]
+                            },
+                            {
+                                "activity": "IfCurrentSchemahasMoreColumns",
+                                "dependencyConditions": [
+                                    "Completed"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": {
+                                    "value": "IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'asad')\nBEGIN\nEXEC('CREATE SCHEMA asad')\nselect Count(*) from sys.symmetric_keys;\nEND\nELSE\nBEGIN\n    select Count(*) from sys.symmetric_keys;\nEND",
+                                    "type": "Expression"
+                                },
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "AzureSqlOperationsTable",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "tableName": "operationsTable",
+                                    "schemaName": "asad"
+                                }
+                            },
+                            "firstRowOnly": false
+                        }
+                    },
+                    {
+                        "name": "covid_tracking_operations",
+                        "type": "ExecuteDataFlow",
+                        "dependsOn": [
+                            {
+                                "activity": "Create Schema if not exists",
+                                "dependencyConditions": [
+                                    "Completed"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "dataflow": {
+                                "referenceName": "LoadIntoOperationalTable_SQL",
+                                "type": "DataFlowReference",
+                                "parameters": {},
+                                "datasetParameters": {
+                                    "sourceCSV": {
+                                        "container": "customer",
+                                        "directory": "curated/covid-19/covid_tracking/latest",
+                                        "file": "covid_tracking.csv"
+                                    },
+                                    "sinkSqlOperationsTable": {
+                                        "tableName": "operationsTable",
+                                        "schemaName": "asad"
+                                    }
+                                }
+                            },
+                            "staging": {},
+                            "compute": {
+                                "coreCount": 8,
+                                "computeType": "General"
+                            },
+                            "traceLevel": "Fine"
+                        }
+                    },
+                    {
+                        "name": "GetMetadataCurrentSchema",
+                        "type": "GetMetadata",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "dataset": {
+                                "referenceName": "source_csv_dataset",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "container": "customer",
+                                    "directory": "curated/covid-19/covid_tracking/latest",
+                                    "file": "covid_tracking.csv"
+                                }
+                            },
+                            "fieldList": [
+                                "itemName",
+                                "columnCount",
+                                "structure"
+                            ],
+                            "storeSettings": {
+                                "type": "AzureBlobStorageReadSettings",
+                                "recursive": true,
+                                "enablePartitionDiscovery": false
+                            },
+                            "formatSettings": {
+                                "type": "DelimitedTextReadSettings"
+                            }
+                        }
+                    },
+                    {
+                        "name": "GetMetadataPrevSchema",
+                        "type": "GetMetadata",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "dataset": {
+                                "referenceName": "previous_data",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            },
+                            "fieldList": [
+                                "itemName",
+                                "columnCount",
+                                "structure"
+                            ],
+                            "storeSettings": {
+                                "type": "AzureBlobStorageReadSettings",
+                                "recursive": true,
+                                "enablePartitionDiscovery": false
+                            },
+                            "formatSettings": {
+                                "type": "DelimitedTextReadSettings"
+                            }
+                        }
+                    },
+                    {
+                        "name": "IfCurrentSchemahasMoreColumns",
+                        "type": "IfCondition",
+                        "dependsOn": [
+                            {
+                                "activity": "GetMetadataCurrentSchema",
+                                "dependencyConditions": [
+                                    "Completed"
+                                ]
+                            },
+                            {
+                                "activity": "GetMetadataPrevSchema",
+                                "dependencyConditions": [
+                                    "Completed"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "expression": {
+                                "value": "@greater(activity('GetMetadataCurrentSchema').output.columnCount,activity('GetMetadataPrevSchema').output.columnCount)",
+                                "type": "Expression"
+                            },
+                            "ifFalseActivities": [
+                                {
+                                    "name": "WaitCurrentSchemaHasMoreColumnsFALSE",
+                                    "type": "Wait",
+                                    "dependsOn": [],
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "waitTimeInSeconds": 1
+                                    }
+                                }
+                            ],
+                            "ifTrueActivities": [
+                                {
+                                    "name": "WaitCurrentSchemaHasMoreColumnsTrue",
+                                    "type": "Wait",
+                                    "dependsOn": [],
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "waitTimeInSeconds": 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "IfCurrentSchemaHasLessColumns",
+                        "type": "IfCondition",
+                        "dependsOn": [
+                            {
+                                "activity": "GetMetadataCurrentSchema",
+                                "dependencyConditions": [
+                                    "Completed"
+                                ]
+                            },
+                            {
+                                "activity": "GetMetadataPrevSchema",
+                                "dependencyConditions": [
+                                    "Completed"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "expression": {
+                                "value": "@greater(activity('GetMetadataPrevSchema').output.columnCount,activity('GetMetadataCurrentSchema').output.columnCount)",
+                                "type": "Expression"
+                            },
+                            "ifFalseActivities": [
+                                {
+                                    "name": "WaitCurrentSchemaLessColumnsFALSE",
+                                    "type": "Wait",
+                                    "dependsOn": [],
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "waitTimeInSeconds": 1
+                                    }
+                                }
+                            ],
+                            "ifTrueActivities": [
+                                {
+                                    "name": "WaitCurrentSchemaHasLessColumnsTRUE",
+                                    "type": "Wait",
+                                    "dependsOn": [],
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "waitTimeInSeconds": 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "IfCurrentSchemaHasSameColumnbutDifferentArrangement",
+                        "type": "IfCondition",
+                        "dependsOn": [
+                            {
+                                "activity": "GetMetadataCurrentSchema",
+                                "dependencyConditions": [
+                                    "Completed"
+                                ]
+                            },
+                            {
+                                "activity": "GetMetadataPrevSchema",
+                                "dependencyConditions": [
+                                    "Completed"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "expression": {
+                                "value": "@and(equals(activity('GetMetadataCurrentSchema').output.columnCount,activity('GetMetadataPrevSchema').output.columnCount),not(equals(activity('GetMetadataCurrentSchema').output.structure,activity('GetMetadataPrevSchema').output.structure)))",
+                                "type": "Expression"
+                            },
+                            "ifFalseActivities": [
+                                {
+                                    "name": "WaitCurrentSchemaHasSameColDiffArrangementFALSE",
+                                    "type": "Wait",
+                                    "dependsOn": [],
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "waitTimeInSeconds": 1
+                                    }
+                                }
+                            ],
+                            "ifTrueActivities": [
+                                {
+                                    "name": "WaitCurrentSchemaHasSameColDiffArrangementTRUE",
+                                    "type": "Wait",
+                                    "dependsOn": [],
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "waitTimeInSeconds": 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "SavePrevSchemaCopy",
+                        "type": "Copy",
+                        "dependsOn": [
+                            {
+                                "activity": "IfCurrentSchemahasMoreColumns",
+                                "dependencyConditions": [
+                                    "Completed"
+                                ]
+                            },
+                            {
+                                "activity": "IfCurrentSchemaHasLessColumns",
+                                "dependencyConditions": [
+                                    "Completed"
+                                ]
+                            },
+                            {
+                                "activity": "IfCurrentSchemaHasSameColumnbutDifferentArrangement",
+                                "dependencyConditions": [
+                                    "Completed"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "DelimitedTextSource",
+                                "storeSettings": {
+                                    "type": "AzureBlobStorageReadSettings",
+                                    "recursive": true,
+                                    "enablePartitionDiscovery": false
+                                },
+                                "formatSettings": {
+                                    "type": "DelimitedTextReadSettings"
+                                }
+                            },
+                            "sink": {
+                                "type": "DelimitedTextSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobStorageWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "DelimitedTextWriteSettings",
+                                    "quoteAllText": true,
+                                    "fileExtension": ".txt"
+                                }
+                            },
+                            "enableStaging": false,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "typeConversion": true,
+                                "typeConversionSettings": {
+                                    "allowDataTruncation": true,
+                                    "treatBooleanAsNumber": false
+                                }
+                            }
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "previous_data",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "get_previous_data_copy",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ]
+                    },
+                    {
+                        "name": "SavePrevSchema",
+                        "type": "Copy",
+                        "dependsOn": [
+                            {
+                                "activity": "SavePrevSchemaCopy",
+                                "dependencyConditions": [
+                                    "Completed"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "DelimitedTextSource",
+                                "storeSettings": {
+                                    "type": "AzureBlobStorageReadSettings",
+                                    "recursive": true,
+                                    "enablePartitionDiscovery": false
+                                },
+                                "formatSettings": {
+                                    "type": "DelimitedTextReadSettings"
+                                }
+                            },
+                            "sink": {
+                                "type": "DelimitedTextSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobStorageWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "DelimitedTextWriteSettings",
+                                    "quoteAllText": true,
+                                    "fileExtension": ".txt"
+                                }
+                            },
+                            "enableStaging": false,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "typeConversion": true,
+                                "typeConversionSettings": {
+                                    "allowDataTruncation": true,
+                                    "treatBooleanAsNumber": false
+                                }
+                            }
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "source_csv_dataset",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "container": "customer",
+                                    "directory": "curated/covid-19/covid_tracking/latest",
+                                    "file": "covid_tracking.csv"
+                                }
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "previous_data",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ]
+                    },
+                    {
+                        "name": "PreviousStaggingTable",
+                        "type": "Copy",
+                        "dependsOn": [
+                            {
+                                "activity": "PreviousStaggingTableSave",
+                                "dependencyConditions": [
+                                    "Completed"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "sink": {
+                                "type": "AzureSqlSink",
+                                "preCopyScript": {
+                                    "value": "IF OBJECT_ID('asad.prev_stagging_table', 'u') IS NOT NULL \n  DROP TABLE asad.prev_stagging_table",
+                                    "type": "Expression"
+                                },
+                                "tableOption": "autoCreate",
+                                "disableMetricsCollection": false
+                            },
+                            "enableStaging": false,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "typeConversion": true,
+                                "typeConversionSettings": {
+                                    "allowDataTruncation": true,
+                                    "treatBooleanAsNumber": false
+                                }
+                            }
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "AzureSqlStagging",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "tablename": "staggingTable",
+                                    "schemaName": "asad"
+                                }
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "prev_stagging_table",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "table_name": "prev_stagging_table",
+                                    "schema_name": "asad"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "PreviousStaggingTableSave",
+                        "type": "Copy",
+                        "dependsOn": [
+                            {
+                                "activity": "IfDataTypeChangedAlert",
+                                "dependencyConditions": [
+                                    "Completed"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "sink": {
+                                "type": "AzureSqlSink",
+                                "preCopyScript": {
+                                    "value": "IF OBJECT_ID('asad.get_prev_stagging_table_copy', 'u') IS NOT NULL \n  DROP TABLE asad.get_prev_stagging_table_copy",
+                                    "type": "Expression"
+                                },
+                                "tableOption": "autoCreate",
+                                "disableMetricsCollection": false
+                            },
+                            "enableStaging": false,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "typeConversion": true,
+                                "typeConversionSettings": {
+                                    "allowDataTruncation": true,
+                                    "treatBooleanAsNumber": false
+                                }
+                            }
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "prev_stagging_table",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "table_name": "prev_stagging_table",
+                                    "schema_name": "asad"
+                                }
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "get_prev_stagging_table_copy",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "table_name": "get_prev_stagging_table_copy",
+                                    "schema_name": "asad"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "CreateStoreProcedureIfNotExists",
+                        "type": "Lookup",
+                        "dependsOn": [
+                            {
+                                "activity": "covid_tracking_StaggingTable",
+                                "dependencyConditions": [
+                                    "Completed"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": {
+                                    "value": "IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'asad')\nBEGIN\nEXEC('CREATE SCHEMA asad')\nEND\nIF NOT EXISTS (\n    select * \n    from sys.objects \n    WHERE object_id = OBJECT_ID(N'[asad].[DataTypeChangedProc]')\n    )\nBEGIN\n    EXEC('CREATE PROCEDURE asad.DataTypeChangedProc AS IF OBJECT_ID(''asad.staggingChangedDataTypeTable'', ''u'') IS NOT NULL DROP TABLE asad.staggingChangedDataTypeTable; CREATE TABLE asad.staggingChangedDataTypeTable( table1_name varchar(255), Column1_name varchar(255), DATA_TYPE1 varchar(255), table2_name varchar(255), Column2_name varchar(255), DATA_TYPE2 varchar(255) ); INSERT INTO asad.staggingChangedDataTypeTable SELECT c1.table_name, c1.COLUMN_NAME, c1.DATA_TYPE, c2.table_name, c2.COLUMN_NAME, c2.DATA_TYPE FROM [INFORMATION_SCHEMA].[COLUMNS] c1 INNER JOIN [INFORMATION_SCHEMA].[COLUMNS] c2 ON (c1.COLUMN_NAME = c2.COLUMN_NAME AND c1.data_type <> c2.DATA_TYPE) WHERE c1.table_name=''staggingTable'' AND c2.table_name = ''prev_stagging_table'';')\n    select Count(*) from sys.symmetric_keys;\nEND\n\nELSE\n\nBEGIN\n    select Count(*) from sys.symmetric_keys;\nEND",
+                                    "type": "Expression"
+                                },
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "save_store_proc_stagging_result",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "table_name": "staggingChangedDataTypeTable",
+                                    "schema_name": "asad"
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "name": "Sql Stagging Data Type change detection",
+                        "type": "SqlServerStoredProcedure",
+                        "dependsOn": [
+                            {
+                                "activity": "CreateStoreProcedureIfNotExists",
+                                "dependencyConditions": [
+                                    "Completed"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "storedProcedureName": "[[asad].[DataTypeChangedProc]"
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "AzureSqlDatabaseLinkedService",
+                            "type": "LinkedServiceReference"
+                        }
+                    },
+                    {
+                        "name": "Get Changed Data Type Columns",
+                        "type": "Lookup",
+                        "dependsOn": [
+                            {
+                                "activity": "Sql Stagging Data Type change detection",
+                                "dependencyConditions": [
+                                    "Completed"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": {
+                                    "value": "select * from asad.staggingChangedDataTypeTable",
+                                    "type": "Expression"
+                                },
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "save_store_proc_stagging_result",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "table_name": "staggingChangedDataTypeTable",
+                                    "schema_name": "asad"
+                                }
+                            },
+                            "firstRowOnly": false
+                        }
+                    },
+                    {
+                        "name": "IfDataTypeChangedAlert",
+                        "type": "IfCondition",
+                        "dependsOn": [
+                            {
+                                "activity": "Get Changed Data Type Columns",
+                                "dependencyConditions": [
+                                    "Completed"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "expression": {
+                                "value": "@greater(activity('Get Changed Data Type Columns').output.count,0)",
+                                "type": "Expression"
+                            },
+                            "ifFalseActivities": [
+                                {
+                                    "name": "WaitFALSEchangedDataType",
+                                    "type": "Wait",
+                                    "dependsOn": [],
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "waitTimeInSeconds": 1
+                                    }
+                                }
+                            ],
+                            "ifTrueActivities": [
+                                {
+                                    "name": "WaitTRUEchangedDataType",
+                                    "type": "Wait",
+                                    "dependsOn": [],
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "waitTimeInSeconds": 1
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "folder": {
+                    "name": "CovidDefinitiveHC"
+                },
+                "annotations": [],
+                "lastPublishTime": "2021-01-13T09:55:00Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/dataflows/LoadIntoStaggingTable_SQL')]",
+                "[concat(variables('factoryId'), '/datasets/AzureSqlOperationsTable')]",
+                "[concat(variables('factoryId'), '/dataflows/LoadIntoOperationalTable_SQL')]",
+                "[concat(variables('factoryId'), '/datasets/source_csv_dataset')]",
+                "[concat(variables('factoryId'), '/datasets/previous_data')]",
+                "[concat(variables('factoryId'), '/datasets/get_previous_data_copy')]",
+                "[concat(variables('factoryId'), '/datasets/AzureSqlStagging')]",
+                "[concat(variables('factoryId'), '/datasets/prev_stagging_table')]",
+                "[concat(variables('factoryId'), '/datasets/get_prev_stagging_table_copy')]",
+                "[concat(variables('factoryId'), '/datasets/save_store_proc_stagging_result')]",
+                "[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabaseLinkedService')]"
+            ]
+        },
 		{
 			"name": "[concat(parameters('factoryName'), '/AzureBlobStorageCustomer')]",
 			"type": "Microsoft.DataFactory/factories/linkedServices",
@@ -2235,6 +3043,7 @@
 			}
 		},
      {
+            "condition": "[equals(parameters('ShareDataResource'),'No')]",
             "name": "[concat(parameters('factoryName'), '/DailyTrigger')]",
             "type": "Microsoft.DataFactory/factories/triggers",
             "apiVersion": "2018-06-01",
@@ -2265,6 +3074,40 @@
                 "[concat(variables('factoryId'), '/pipelines/SqlDataLoader')]"
             ]
         },
+
+        {
+            "condition": "[equals(parameters('ShareDataResource'),'Yes')]",
+            "name": "[concat(parameters('factoryName'), '/DailyTriggerNew')]",
+            "type": "Microsoft.DataFactory/factories/triggers",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "This is the daily trigger for pipeline execution",
+                "annotations": [],
+                "runtimeState": "Started",
+                "pipelines": [
+                    {
+                        "pipelineReference": {
+                            "referenceName": "SqlDataLoader_datashare",
+                            "type": "PipelineReference"
+                        },
+                        "parameters": {}
+                    }
+                ],
+                "type": "ScheduleTrigger",
+                "typeProperties": {
+                    "recurrence": {
+                        "frequency": "Hour",
+                        "interval": 24,
+                        "startTime": "[parameters('currentTime')]",
+                        "timeZone": "UTC"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/pipelines/SqlDataLoader_datashare')]"
+            ]
+        },
+        
 	{
             "type": "microsoft.insights/actionGroups",
             "apiVersion": "2019-03-01",
