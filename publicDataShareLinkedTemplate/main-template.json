@@ -99,6 +99,38 @@
             "metadata": {
               "description": "This parameter will get the current utc time"
               }
+        },
+
+        "ShareDataResource": {
+            "defaultValue": "Yes",
+            "allowedValues": [ "Yes", "No" ],
+            "type": "string",
+            "metadata": {
+                "description": "Do you want to create Share data resource to share data from one environment to other ?"
+            }
+        },
+
+      "DatashareProjectName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify a project name that is used to generate resource names."
+            }
+        },
+
+        "syncKind": {
+            "type": "string",
+            "defaultValue": "ScheduleBased",
+            "metadata": {
+                "description": "Specify the kind of synchronization."
+            }
+        },
+        "syncInterval": {
+            "type": "string",
+            "defaultValue": "Day",
+            "allowedValues": [ "Day", "Hour" ],
+            "metadata": {
+                "description": "Specify snapshot schedule recurrence."
+            }
         }
   },
   "variables": {
@@ -117,7 +149,7 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "https://raw.githubusercontent.com/assadullah96/AzureARMTemplates/main/AzureLinkedTemplate-main/storageAccount.json",
+                    "uri": "https://raw.githubusercontent.com/assadullah96/azureLinkedTemplateDataShare/main/publicDataShareLinkedTemplate/storageAccount.json",
                     "contentVersion": "1.0.0.0"
                 },
                  "parameters": {
@@ -125,10 +157,10 @@
                     "value": "[variables('storageActNameUnique')]"
                  },
                      "location":{
-                    "value": "[parameters('location')]"
-                }   
+                     "value": "[parameters('location')]"
+                } 
             }
-            }
+        }
     },
 
 
@@ -142,7 +174,7 @@
         "properties": {
         "mode": "Incremental",
         "templateLink": {
-            "uri": "https://raw.githubusercontent.com/assadullah96/AzureARMTemplates/main/AzureLinkedTemplate-main/appLogicActionRule.json",
+            "uri": "https://raw.githubusercontent.com/assadullah96/azureLinkedTemplateDataShare/main/publicDataShareLinkedTemplate/appLogicActionRule.json",
             "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -167,7 +199,7 @@
     "properties": {
       "mode": "Incremental",
       "templateLink": {
-        "uri": "https://raw.githubusercontent.com/assadullah96/AzureARMTemplates/main/AzureLinkedTemplate-main/dataFactory.json",
+        "uri": "https://raw.githubusercontent.com/assadullah96/azureLinkedTemplateDataShare/main/publicDataShareLinkedTemplate/dataFactory.json",
         "contentVersion": "1.0.0.0"
       },
       "parameters": {
@@ -215,6 +247,46 @@
       }
     }
   },
+
+  {
+    "type": "Microsoft.Resources/deployments",
+    "apiVersion": "2019-10-01",
+    "name": "DataShare",
+    "dependsOn": [ 
+          "StorageAccountTemplate"
+    ],
+    "properties": {
+      "mode": "Incremental",
+      "templateLink": {
+        "uri": "https://raw.githubusercontent.com/assadullah96/azureLinkedTemplateDataShare/main/publicDataShareLinkedTemplate/datashare.json",
+        "contentVersion": "1.0.0.0"
+      },
+      "parameters": {
+            "DatashareProjectName":{
+            "value": "[parameters('DatashareProjectName')]"
+            },
+
+           "location":{
+            "value": "[parameters('location')]"
+           },
+
+            "syncKind":{
+            "value": "[parameters('syncKind')]"
+            },
+
+            "syncInterval":{
+            "value": "[parameters('syncInterval')]"
+            },
+            
+            "ShareDataResource":{
+            "value": "[parameters('ShareDataResource')]"
+            },
+            "currentTime":{
+            "value": "[parameters('currentTime')]"
+            }
+      }
+    }
+  },
   
     {
     "type": "Microsoft.Resources/deployments",
@@ -226,7 +298,7 @@
     "properties": {
       "mode": "Incremental",
       "templateLink": {
-        "uri": "https://raw.githubusercontent.com/assadullah96/AzureARMTemplates/main/AzureLinkedTemplate-main/SqlServerandDb.json",
+        "uri": "https://raw.githubusercontent.com/assadullah96/azureLinkedTemplateDataShare/main/publicDataShareLinkedTemplate/SqlServerandDb.json",
         "contentVersion": "1.0.0.0"
       },
       "parameters": {
